@@ -80,7 +80,7 @@ def main(args):
     # Load and preprocess data for model
     #########################
 
-    data_path = "data/stock.csv"
+    data_path = "TimeGAN/data/stock.csv"
     X, T, _, args.max_seq_len, args.padding_value = data_preprocess(
         data_path, args.max_seq_len
     )
