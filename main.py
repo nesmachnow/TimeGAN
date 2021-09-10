@@ -34,20 +34,20 @@ def main(args):
         raise ValueError(f"Code directory not found at {code_dir}.")
 
     ## Data directory
-    data_path = os.path.abspath("./data")
+    data_path = os.path.abspath("TimeGAN/data")
     if not os.path.exists(data_path):
         raise ValueError(f"Data file not found at {data_path}.")
     data_dir = os.path.dirname(data_path)
     data_file_name = os.path.basename(data_path)
 
     ## Output directories
-    args.model_path = os.path.abspath(f"./output/{args.exp}/")
+    args.model_path = os.path.abspath(f"TimeGAN/output/{args.exp}/")
     out_dir = os.path.abspath(args.model_path)
     if not os.path.exists(out_dir):
         os.makedirs(out_dir, exist_ok=True)
     
     # TensorBoard directory
-    tensorboard_path = os.path.abspath("./tensorboard")
+    tensorboard_path = os.path.abspath("TimeGAN/tensorboard")
     if not os.path.exists(tensorboard_path):
         os.makedirs(tensorboard_path, exist_ok=True)
 
