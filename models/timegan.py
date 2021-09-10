@@ -3,7 +3,7 @@ import torch
 import numpy as np
 
 class EmbeddingNetwork(torch.nn.Module):
-    """The embedding network (encoder) for TimeGAN
+    """ Embedding ANN (encoder) de TimeGAN
     """
     def __init__(self, args):
         super(EmbeddingNetwork, self).__init__()
@@ -13,7 +13,7 @@ class EmbeddingNetwork(torch.nn.Module):
         self.padding_value = args.padding_value
         self.max_seq_len = args.max_seq_len
 
-        # Embedder Architecture
+        # Arquitectura de la ANN para embedding: GRU
         self.emb_rnn = torch.nn.GRU(
             input_size=self.feature_dim, 
             hidden_size=self.hidden_dim, 
@@ -23,9 +23,9 @@ class EmbeddingNetwork(torch.nn.Module):
         self.emb_linear = torch.nn.Linear(self.hidden_dim, self.hidden_dim)
         self.emb_sigmoid = torch.nn.Sigmoid()
 
-        # Init weights
-        # Default weights of TensorFlow is Xavier Uniform for W and 1 or 0 for b
-        # Reference: 
+        # Inicialización de pesos
+        # Se inicializa con Xavier Uniform (la inicializacion por defecto de TensorFlow) para W y 0/1 para b
+        # Referencias: 
         # - https://www.tensorflow.org/api_docs/python/tf/compat/v1/get_variable
         # - https://github.com/tensorflow/tensorflow/blob/v2.3.1/tensorflow/python/keras/layers/legacy_rnn/rnn_cell_impl.py#L484-L614
         with torch.no_grad():
@@ -45,14 +45,14 @@ class EmbeddingNetwork(torch.nn.Module):
                     param.data.fill_(0)
 
     def forward(self, X, T):
-        """Forward pass for embedding features from original space into latent space
-        Args:
-            - X: input time-series features (B x S x F)
-            - T: input temporal information (B)
-        Returns:
-            - H: latent space embeddings (B x S x H)
+        """Propagación para embedding de características desde el espacio original al espacio latente
+        Argumentos:
+            - X: características de la serie temporal (B x S x F)
+            - T: información temporal (B)
+        Salida:
+            - H: embeddings en el espacio latente (B x S x H)
         """
-        # Dynamic RNN input for ignoring paddings
+        # Entrada dinámica de la RNN para ignorar valores de relleno (paddings)
         X_packed = torch.nn.utils.rnn.pack_padded_sequence(
             input=X, 
             lengths=T, 
@@ -63,7 +63,7 @@ class EmbeddingNetwork(torch.nn.Module):
         # 128 x 100 x 71
         H_o, H_t = self.emb_rnn(X_packed)
         
-        # Pad RNN output back to sequence length
+        # Rellenar la salida de la RNN hasta el largo de la secuencia
         H_o, T = torch.nn.utils.rnn.pad_packed_sequence(
             sequence=H_o, 
             batch_first=True,
@@ -78,7 +78,7 @@ class EmbeddingNetwork(torch.nn.Module):
         return H
 
 class RecoveryNetwork(torch.nn.Module):
-    """The recovery network (decoder) for TimeGAN
+    """ ANN para recovery (decoder) de TimeGAN
     """
     def __init__(self, args):
         super(RecoveryNetwork, self).__init__()
@@ -88,7 +88,7 @@ class RecoveryNetwork(torch.nn.Module):
         self.padding_value = args.padding_value
         self.max_seq_len = args.max_seq_len
 
-        # Recovery Architecture
+        # Arquitectira de la ANN de recovery (GRU)
         self.rec_rnn = torch.nn.GRU(
             input_size=self.hidden_dim, 
             hidden_size=self.hidden_dim, 
@@ -96,12 +96,9 @@ class RecoveryNetwork(torch.nn.Module):
             batch_first=True
         )
         self.rec_linear = torch.nn.Linear(self.hidden_dim, self.feature_dim)
-
-        # Init weights
-        # Default weights of TensorFlow is Xavier Uniform for W and 1 or 0 for b
-        # Reference: 
-        # - https://www.tensorflow.org/api_docs/python/tf/compat/v1/get_variable
-        # - https://github.com/tensorflow/tensorflow/blob/v2.3.1/tensorflow/python/keras/layers/legacy_rnn/rnn_cell_impl.py#L484-L614
+        
+        # Inicialización de pesos
+        # Se inicializa con Xavier Uniform (la inicializacion por defecto de TensorFlow) para W y 0/1 para b
         with torch.no_grad():
             for name, param in self.rec_rnn.named_parameters():
                 if 'weight_ih' in name:
@@ -120,13 +117,15 @@ class RecoveryNetwork(torch.nn.Module):
 
     def forward(self, H, T):
         """Forward pass for the recovering features from latent space to original space
-        Args:
-            - H: latent representation (B x S x E)
-            - T: input temporal information (B)
-        Returns:
-            - X_tilde: recovered data (B x S x F)
+        Argumentos:
+            - H: representaciones en el espacio latente (B x S x H)
+            - T: información temporal (B)
+        Salida:
+            - X_tilde: dato recuperado (B x S x F)
         """
-        # Dynamic RNN input for ignoring paddings
+        
+        # Entrada dinámica de la RNN para ignorar valores de relleno (paddings)
+
         H_packed = torch.nn.utils.rnn.pack_padded_sequence(
             input=H, 
             lengths=T, 
@@ -137,7 +136,7 @@ class RecoveryNetwork(torch.nn.Module):
         # 128 x 100 x 10
         H_o, H_t = self.rec_rnn(H_packed)
         
-        # Pad RNN output back to sequence length
+        # Rellenar la salida de la RNN hasta el largo de la secuencia
         H_o, T = torch.nn.utils.rnn.pad_packed_sequence(
             sequence=H_o, 
             batch_first=True,
@@ -150,7 +149,7 @@ class RecoveryNetwork(torch.nn.Module):
         return X_tilde
 
 class SupervisorNetwork(torch.nn.Module):
-    """The Supervisor network (decoder) for TimeGAN
+    """ ANN supervisor (decoder) de TimeGAN
     """
     def __init__(self, args):
         super(SupervisorNetwork, self).__init__()
