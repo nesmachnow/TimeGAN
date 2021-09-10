@@ -10,7 +10,7 @@ emb_epochs=50
 sup_epochs=50
 gan_epochs=50
 
-python main.py \
+python TimaGAN/main.py \
 --device            cuda \
 --exp               $exp \
 --is_train          $train \
