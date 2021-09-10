@@ -13,7 +13,7 @@ class EmbeddingNetwork(torch.nn.Module):
         self.padding_value = args.padding_value
         self.max_seq_len = args.max_seq_len
 
-        # Arquitectura de la ANN para embedding: GRU
+        # Arquitectura de la ANN para embedding: Gated Recurrent Unit (GRU) 
         self.emb_rnn = torch.nn.GRU(
             input_size=self.feature_dim, 
             hidden_size=self.hidden_dim, 
@@ -88,7 +88,7 @@ class RecoveryNetwork(torch.nn.Module):
         self.padding_value = args.padding_value
         self.max_seq_len = args.max_seq_len
 
-        # Arquitectira de la ANN de recovery (GRU)
+        # Arquitectura de la ANN de recovery (GRU)
         self.rec_rnn = torch.nn.GRU(
             input_size=self.hidden_dim, 
             hidden_size=self.hidden_dim, 
@@ -116,7 +116,7 @@ class RecoveryNetwork(torch.nn.Module):
                     param.data.fill_(0)
 
     def forward(self, H, T):
-        """Forward pass for the recovering features from latent space to original space
+        """Propagación para recovery de características desde el espacio latente al espacio original
         Argumentos:
             - H: representaciones en el espacio latente (B x S x H)
             - T: información temporal (B)
@@ -125,7 +125,6 @@ class RecoveryNetwork(torch.nn.Module):
         """
         
         # Entrada dinámica de la RNN para ignorar valores de relleno (paddings)
-
         H_packed = torch.nn.utils.rnn.pack_padded_sequence(
             input=H, 
             lengths=T, 
@@ -158,7 +157,7 @@ class SupervisorNetwork(torch.nn.Module):
         self.padding_value = args.padding_value
         self.max_seq_len = args.max_seq_len
 
-        # Supervisor Architecture
+        # Arquitectura del supervisor: GRU
         self.sup_rnn = torch.nn.GRU(
             input_size=self.hidden_dim, 
             hidden_size=self.hidden_dim, 
@@ -168,11 +167,8 @@ class SupervisorNetwork(torch.nn.Module):
         self.sup_linear = torch.nn.Linear(self.hidden_dim, self.hidden_dim)
         self.sup_sigmoid = torch.nn.Sigmoid()
 
-        # Init weights
-        # Default weights of TensorFlow is Xavier Uniform for W and 1 or 0 for b
-        # Reference: 
-        # - https://www.tensorflow.org/api_docs/python/tf/compat/v1/get_variable
-        # - https://github.com/tensorflow/tensorflow/blob/v2.3.1/tensorflow/python/keras/layers/legacy_rnn/rnn_cell_impl.py#L484-L614
+        # Inicialización de pesos
+        # Se inicializa con Xavier Uniform (la inicializacion por defecto de TensorFlow) para W y 0/1 para b
         with torch.no_grad():
             for name, param in self.sup_rnn.named_parameters():
                 if 'weight_ih' in name:
@@ -190,14 +186,14 @@ class SupervisorNetwork(torch.nn.Module):
                     param.data.fill_(0)
 
     def forward(self, H, T):
-        """Forward pass for the supervisor for predicting next step
-        Args:
-            - H: latent representation (B x S x E)
-            - T: input temporal information (B)
-        Returns:
-            - H_hat: predicted next step data (B x S x E)
+        """Propagación para el supervisor para predecir el siguiente paso
+        Argumentos:
+            - H: representanción en el espacio latente (B x S x E)
+            - T: información temporal (B)
+        Salida:
+            - H_hat: predicción (dato) para el siguiente paso (B x S x E)
         """
-        # Dynamic RNN input for ignoring paddings
+        # Entrada dinámica de la RNN para ignorar valores de relleno (paddings)
         H_packed = torch.nn.utils.rnn.pack_padded_sequence(
             input=H, 
             lengths=T, 
@@ -208,7 +204,7 @@ class SupervisorNetwork(torch.nn.Module):
         # 128 x 100 x 10
         H_o, H_t = self.sup_rnn(H_packed)
         
-        # Pad RNN output back to sequence length
+        # Rellenar la salida de la RNN hasta el largo de la secuencia
         H_o, T = torch.nn.utils.rnn.pad_packed_sequence(
             sequence=H_o, 
             batch_first=True,
@@ -223,7 +219,7 @@ class SupervisorNetwork(torch.nn.Module):
         return H_hat
 
 class GeneratorNetwork(torch.nn.Module):
-    """The generator network (encoder) for TimeGAN
+    """ Generador de TimeGAN
     """
     def __init__(self, args):
         super(GeneratorNetwork, self).__init__()
@@ -233,7 +229,7 @@ class GeneratorNetwork(torch.nn.Module):
         self.padding_value = args.padding_value
         self.max_seq_len = args.max_seq_len
 
-        # Generator Architecture
+        # Arquitectura del generador: GRU
         self.gen_rnn = torch.nn.GRU(
             input_size=self.Z_dim, 
             hidden_size=self.hidden_dim, 
@@ -242,12 +238,9 @@ class GeneratorNetwork(torch.nn.Module):
         )
         self.gen_linear = torch.nn.Linear(self.hidden_dim, self.hidden_dim)
         self.gen_sigmoid = torch.nn.Sigmoid()
-
-        # Init weights
-        # Default weights of TensorFlow is Xavier Uniform for W and 1 or 0 for b
-        # Reference: 
-        # - https://www.tensorflow.org/api_docs/python/tf/compat/v1/get_variable
-        # - https://github.com/tensorflow/tensorflow/blob/v2.3.1/tensorflow/python/keras/layers/legacy_rnn/rnn_cell_impl.py#L484-L614
+        
+        # Inicialización de pesos
+        # Se inicializa con Xavier Uniform (la inicializacion por defecto de TensorFlow) para W y 0/1 para b
         with torch.no_grad():
             for name, param in self.gen_rnn.named_parameters():
                 if 'weight_ih' in name:
@@ -265,14 +258,15 @@ class GeneratorNetwork(torch.nn.Module):
                     param.data.fill_(0)
 
     def forward(self, Z, T):
-        """Takes in random noise (features) and generates synthetic features within the latent space
-        Args:
-            - Z: input random noise (B x S x Z)
-            - T: input temporal information
-        Returns:
+        """Recibe un ruido aleatorio (caracteristicas) y genera características sintéticas en el espacio latente
+        Argumentoss:
+            - Z: ruido aleatorio (B x S x Z)
+            - T: información temporal (B)
+        Salida:
             - H: embeddings (B x S x E)
         """
-        # Dynamic RNN input for ignoring paddings
+        
+        # Entrada dinámica de la RNN para ignorar valores de relleno (paddings)
         Z_packed = torch.nn.utils.rnn.pack_padded_sequence(
             input=Z, 
             lengths=T, 
@@ -345,7 +339,7 @@ class DiscriminatorNetwork(torch.nn.Module):
         Returns:
             - logits: predicted logits (B x S x 1)
         """
-        # Dynamic RNN input for ignoring paddings
+        # Entrada dinámica de la RNN para ignorar valores de relleno (paddings)
         H_packed = torch.nn.utils.rnn.pack_padded_sequence(
             input=H, 
             lengths=T, 
