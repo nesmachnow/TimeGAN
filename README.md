@@ -1,5 +1,6 @@
 # TimeGAN en PyTorch
-Reimplementación de TimeGAN ([Yoon et al., NIPS2019](https://papers.nips.cc/paper/8789-time-series-generative-adversarial-networks)) en PyTorch, en base al código original [disponible en este link](https://github.com/jsyoon0823/TimeGAN).
+Reimplementación de TimeGAN ([Yoon et al., NIPS2019](https://papers.nips.cc/paper/8789-time-series-generative-adversarial-networks)) en PyTorch, desarrollada por 
+[d9n13lt4n](https://github.com/d9n13lt4n/timegan-pytorch), en base al código original [disponible en este link](https://github.com/jsyoon0823/TimeGAN).
 
 ## Requisitos de instalación
 Python3.8 y entorno Linux con GPU.
