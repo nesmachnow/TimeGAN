@@ -1,14 +1,13 @@
-# timegan-pytorch
-This repository holds the code for the reimplementation of TimeGAN ([Yoon et al., NIPS2019](https://papers.nips.cc/paper/8789-time-series-generative-adversarial-networks)) using PyTorch. Some of the code was derived from the original implementation [here](https://github.com/jsyoon0823/TimeGAN).
+# TimeGAN en PyTorch
+Reimplementación de TimeGAN ([Yoon et al., NIPS2019](https://papers.nips.cc/paper/8789-time-series-generative-adversarial-networks)) en PyTorch, en base al código original [here](https://github.com/jsyoon0823/TimeGAN).
 
-## Getting Started
-### Installing Requirements
-This implementation assumes Python3.8 and a Linux environment with a GPU is used.
+## Requisits de instalacióno
+Python3.8 y entorno Linux con GPU.
 ```bash
 cat requirements.txt | xargs -n 1 pip install --upgrade
 ```
 
-### Directory Hierarchy
+### structura de directorios
 ```bash
 data/                         # the folder holding the datasets and preprocessing files
   ├ data_preprocessing.py     # the data preprocessing functions
